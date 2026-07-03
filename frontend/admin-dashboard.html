@@ -57,7 +57,7 @@
 </div>
 
 <script>
-    const socket = io("http://localhost:3000");
+    const socket = io("siska-brooklyn-production.up.railway.app");
     const token = localStorage.getItem('token');
     
     // STATE UNTUK CHAT
@@ -75,7 +75,7 @@
     // 2. LOGIKA CHAT YANG SUDAH DIPERBAIKI (Group by room_id)
     async function loadMessages() {
         try {
-            const res = await fetch('http://localhost:3000/messages', { 
+            const res = await fetch('siska-brooklyn-production.up.railway.app/messages', { 
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) {
@@ -168,7 +168,7 @@
     // 3. LOGIKA KLAIM (Sudah disempurnakan)
     async function loadClaims() {
         try {
-            const res = await fetch('http://localhost:3000/claims', { headers: { 'Authorization': `Bearer ${token}` }});
+            const res = await fetch('siska-brooklyn-production.up.railway.app/claims', { headers: { 'Authorization': `Bearer ${token}` }});
             if (!res.ok) throw new Error("Gagal memuat klaim");
             
             const claims = await res.json();
@@ -189,7 +189,7 @@
     }
 
     async function updateClaim(id, status) {
-        await fetch(`http://localhost:3000/claims/${id}`, {
+        await fetch(`siska-brooklyn-production.up.railway.app/claims/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ status })
