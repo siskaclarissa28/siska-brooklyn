@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin System | Brooklyn Insurance</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #2e7d32; --bg: #f4f7f6; }
+        body { font-family: 'Poppins', sans-serif; display: flex; height: 100vh; margin: 0; background: var(--bg); }
+        .sidebar { width: 250px; background: #fff; border-right: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .nav-btn { display: block; width: 100%; padding: 12px; cursor: pointer; border: none; border-radius: 8px; background: #f0f0f0; text-align: left; }
+        .nav-btn.active { background: var(--primary); color: white; }
+        .section { display: none; }
+        .section.active { display: block; }
+        
+        /* Chat Style */
+        #chatBox { height: 400px; background: white; border: 1px solid #ddd; padding: 20px; overflow-y: auto; border-radius: 10px; margin-bottom: 10px; }
+        .msg { padding: 10px; margin-bottom: 10px; border-radius: 8px; max-width: 60%; }
+        .admin { background: #e8f5e9; align-self: flex-end; margin-left: auto; text-align: right; }
+        .user { background: #eee; }
+        
+        /* Table Style */
+        table { width: 100%; background: white; border-collapse: collapse; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+    <h3>Admin Panel</h3>
+    <button class="nav-btn active" onclick="switchTab('chatSection', this)">Chat Nasabah</button>
+    <button class="nav-btn" onclick="switchTab('claimSection', this)">Data Klaim</button>
+    <hr>
+    <div id="userSidebar"><strong>Daftar Nasabah:</strong></div>
+    <button onclick="localStorage.clear(); window.location.href='index.html'" style="margin-top:20px; color:red; border:none; background:none; cursor:pointer;">Logout</button>
+</div>
+
+<div class="main-content">
+    <div id="chatSection" class="section active">
+        <h2 id="chatTitle">Pilih Nasabah untuk Chat</h2>
+        <div id="chatBox"></div>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="msgInput" style="flex:1; padding:10px;" placeholder="Balas pesan...">
+            <button onclick="sendReply()">Kirim</button>
+        </div>
+    </div>
+
+    <div id="claimSection" class="section">
+        <h2>Pengajuan Klaim</h2>
+        <table>
+            <thead><tr><th>User</th><th>Produk</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="claimBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const socket = io("http://localhost:3000");
+    const token = localStorage.getItem('token');
+    
+    // STATE UNTUK CHAT
+    let chatData = {}; 
+    let currentTarget = null; 
+
+    // 1. Inisialisasi
+    async function init() {
+        if (!token) return window.location.href = 'login.html';
+        socket.emit('join_room', 'Admin');
+        await loadMessages();
+        loadClaims();
+    }
+
+    // 2. LOGIKA CHAT YANG SUDAH DIPERBAIKI (Group by room_id)
+    async function loadMessages() {
+        try {
+            const res = await fetch('http://localhost:3000/messages', { 
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) {
+                if(res.status === 401 || res.status === 403) {
+                    localStorage.removeItem('token');
+                    window.location.href = 'login.html';
+                }
+                throw new Error("Gagal load");
+            }
+            const data = await res.json();
+            
+            chatData = {}; 
+            document.getElementById('userSidebar').innerHTML = "<strong>Daftar Nasabah:</strong>";
+
+            data.forEach(m => {
+                const room = m.room_id; 
+                if (!room) return; // Abaikan data rusak
+
+                if (!chatData[room]) {
+                    chatData[room] = [];
+                    // Buat tombol sidebar hanya untuk nasabah
+                    if (room !== 'Admin') addSidebarUser(room);
+                }
+                // Masukkan pesan ke dalam array kamar tersebut
+                chatData[room].push({ sender: m.sender_name, text: m.message_text });
+            });
+
+            if(currentTarget) renderChat();
+        } catch (err) { console.error("Error load chat:", err); }
+    }
+
+    function addSidebarUser(username) {
+        if(document.getElementById(`btn-${username}`)) return;
+        const btn = document.createElement('button');
+        btn.id = `btn-${username}`;
+        btn.className = 'nav-btn';
+        btn.innerText = "Nasabah: " + username;
+        btn.onclick = () => selectUser(username);
+        document.getElementById('userSidebar').appendChild(btn);
+    }
+
+    function selectUser(username) {
+        currentTarget = username;
+        document.getElementById('chatTitle').innerText = "Chat dengan: " + username;
+        renderChat();
+    }
+
+    function renderChat() {
+        const chatBox = document.getElementById('chatBox');
+        chatBox.innerHTML = "";
+        if (!currentTarget || !chatData[currentTarget]) return;
+
+        chatData[currentTarget].forEach(msg => {
+            const div = document.createElement('div');
+            div.className = `msg ${msg.sender === 'Admin' ? 'admin' : 'user'}`;
+            div.innerHTML = `<b>${msg.sender}:</b> ${msg.text}`;
+            chatBox.appendChild(div);
+        });
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    socket.on('receive_message', (data) => {
+        // data.user adalah pengirim. Jika admin, room-nya currentTarget. Jika nasabah, room-nya adalah data.user
+        const room = data.user === 'Admin' ? currentTarget : data.user;
+        
+        if (!chatData[room]) {
+            chatData[room] = [];
+            addSidebarUser(room);
+        }
+        chatData[room].push({ sender: data.user, text: data.text });
+        if (currentTarget === room) renderChat();
+    });
+
+    function sendReply() {
+        const input = document.getElementById('msgInput');
+        if (!currentTarget || !input.value) {
+            alert("Pilih nasabah dulu dan tulis pesan!");
+            return;
+        }
+
+        // Kirim via socket ke server
+        socket.emit("admin_send_to_user", { target: currentTarget, user: 'Admin', text: input.value });
+        
+        // Render manual di layar admin
+        chatData[currentTarget].push({ sender: 'Admin', text: input.value });
+        renderChat();
+        input.value = "";
+    }
+
+    // 3. LOGIKA KLAIM (Sudah disempurnakan)
+    async function loadClaims() {
+        try {
+            const res = await fetch('http://localhost:3000/claims', { headers: { 'Authorization': `Bearer ${token}` }});
+            if (!res.ok) throw new Error("Gagal memuat klaim");
+            
+            const claims = await res.json();
+            const body = document.getElementById('claimBody');
+            
+            body.innerHTML = claims.map(c => `
+                <tr>
+                    <td>${c.user_name}</td>
+                    <td>${c.product_id || '-'}</td>
+                    <td>${c.status}</td>
+                    <td>
+                        <button onclick="updateClaim(${c.id}, 'approved')">Approve</button>
+                        <button onclick="updateClaim(${c.id}, 'rejected')">Reject</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (err) { console.log(err) }
+    }
+
+    async function updateClaim(id, status) {
+        await fetch(`http://localhost:3000/claims/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ status })
+        });
+        loadClaims();
+    }
+
+    function switchTab(id, btn) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    init();
+</script>
+</body>
+</html>

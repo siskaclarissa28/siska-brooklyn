@@ -1,0 +1,68 @@
+<div id="data" class="message-container">
+    <p>Memuat pesan...</p>
+</div>
+
+<style>
+    .message-container {
+        display: grid;
+        gap: 15px;
+        padding: 20px;
+    }
+
+    .msg-card {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .msg-header {
+        font-weight: bold;
+        color: #2e7d32;
+        margin-bottom: 5px;
+    }
+</style>
+
+<script>
+    async function load() {
+        const dataDiv = document.getElementById('data');
+        const token = localStorage.getItem('token'); // Ambil token dari login
+
+        try {
+            const res = await fetch('http://localhost:3000/messages', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`, // Wajib kirim token
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!res.ok) throw new Error('Akses ditolak atau gagal memuat data');
+
+            const data = await res.json();
+            dataDiv.innerHTML = ""; // Bersihkan loading
+
+            if (data.length === 0) {
+                dataDiv.innerHTML = "<p>Tidak ada pesan.</p>";
+                return;
+            }
+
+            data.forEach(m => {
+                const card = document.createElement('div');
+                card.className = 'msg-card';
+
+                // PERBAIKAN: Masukkan data m.sender_name dan m.message_text ke sini
+                card.innerHTML = `
+        <div class="msg-header">${m.sender_name}</div>
+        <div class="msg-body">${m.message_text}</div>
+    `;
+
+                dataDiv.appendChild(card);
+            });
+        } catch (err) {
+            dataDiv.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
+        }
+    }
+
+    load();
+</script>

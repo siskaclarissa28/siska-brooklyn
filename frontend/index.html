@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brooklyn Insurance</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header class="navbar">
+  <div class="nav-left">
+    <img src="assets/images/logo.png" class="logo">
+    <div id="navMenu" class="nav-links"></div>
+  </div>
+
+  <div id="navRight" class="nav-right"></div>
+</header>>
+<div class="container">
+
+  <div class="left">
+    <h1>Perlindungan kesehatan dan jiwa untuk masa depan yang lebih baik</h1>
+    <p>Brooklyn Insurance hadir memberikan perlindungan terbaik bagi Anda dan keluarga tercinta.</p>
+
+    <button onclick="window.location.href='about.html'">
+      Pelajari Lebih Lanjut
+    </button>
+  </div>
+
+  <div class="right" id="loginBox">
+
+    <h2>Selamat datang!!</h2>
+    <p>Silakan masuk untuk melanjutkan</p>
+
+    <div class="input-box">
+      <input type="text" id="email" placeholder="Email atau nomor ponsel">
+    </div>
+
+    <div class="input-box">
+      <input type="password" id="password" placeholder="Kata sandi">
+    </div>
+
+    <button class="login-btn" onclick="login()">Masuk</button>
+
+    <p class="register-text">
+      Belum punya akun? <a href="register.html">Daftar Sekarang</a>
+    </p>
+
+  </div>
+
+</div>
+
+<div class="features">
+
+  <div class="feature">
+    <img src="assets/images/products/pelindungan.jpeg" class="icon">
+    <h4>Perlindungan Terpercaya</h4>
+    <p>Keamanan terbaik untuk Anda dan keluarga</p>
+  </div>
+
+  <div class="feature">
+    <img src="assets/images/products/kesehatanjiwa.jpeg" class="icon">
+    <h4>Kesehatan & Jiwa</h4>
+    <p>Solusi lengkap asuransi modern</p>
+  </div>
+
+  <div class="feature">
+    <img src="assets/images/products/layanan.jpg" class="icon">
+    <h4>Layanan Cepat</h4>
+    <p>Proses mudah dan responsif</p>
+  </div>
+
+  <div class="feature">
+    <img src="assets/images/products/masadepan.jpeg" class="icon">
+    <h4>Masa Depan Aman</h4>
+    <p>Rencana hidup lebih terjamin</p>
+  </div>
+
+</div>
+
+<script src="assets/js/script.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        loadNavbar();      // Ini untuk navbar
+        checkLoginUI();    // <--- INI WAJIB ADA untuk ubah kotak login
+    });
+</script>
+<div style="background: #ffffff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); padding: 30px; margin-top: 30px; border: 1px solid #f0f0f0;">
+    
+    <div style="border-bottom: 2px solid #f5f5f5; padding-bottom: 15px; margin-bottom: 20px;">
+        <h3 style="color: #1b5e20; margin: 0 0 5px 0; font-size: 22px; font-weight: 700;">Environmental Health Risk</h3>
+        <p style="color: #757575; margin: 0; font-size: 14px;">Tren Polusi Udara PM 2.5 (10 Hari Terakhir) - Waspada ISPA</p>
+    </div>
+
+    <div style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); padding: 15px 20px; border-radius: 12px; margin-bottom: 25px; display: inline-block;">
+        <span style="display: block; font-size: 12px; color: #e65100; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Status Hari Ini</span>
+        <h2 id="todayAQI" style="color: #e65100; font-size: 28px; margin: 5px 0 0 0;">Loading...</h2>
+    </div>
+
+    <div style="position: relative; height: 350px; width: 100%;">
+        <canvas id="airChart"></canvas>
+    </div>
+    
+</div>
+<a href="chat.html" class="chat-fab">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+</a>
+</body>
+</html>
